@@ -1,0 +1,746 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Superconta2</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: terminal comptable en una columna. Cian = Deure / acció, ambre = Haver. Quadrícula de llibre de comptes al fons. */
+:root{
+  --bg:#080c14;--grid:rgba(120,160,220,.06);--panel:#0f1624;--panel2:#141d2f;--line:#25324c;
+  --text:#e6edf7;--muted:#8a99b3;
+  --accent:#3ddcff;--accentink:#04121a;--accentbg:rgba(61,220,255,.12);
+  --amber:#ff9a5c;--amberbg:rgba(255,154,92,.12);--amberline:rgba(255,154,92,.45);--accentline:rgba(61,220,255,.45);
+  --ask:#a99bff;--askink:#120c33;--askbg:rgba(169,155,255,.13);--askline:rgba(169,155,255,.5);
+  --mag:#ff77b8;--magbg:rgba(255,119,184,.12);--magline:rgba(255,119,184,.45);--gold:#ffd84a;
+  --glow1:rgba(169,155,255,.14);--glow2:rgba(61,220,255,.09);--ok:#3be08f;--okbg:rgba(59,224,143,.10);--okglow:rgba(59,224,143,.45);
+  --bad:#ff6b6b;--badbg:rgba(255,107,107,.10);--badglow:rgba(255,107,107,.45);
+  --display:'Chakra Petch','Segoe UI',system-ui,sans-serif;
+  --body:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --bg:#eef2f8;--grid:rgba(30,60,110,.06);--panel:#ffffff;--panel2:#f3f6fb;--line:#cbd5e5;
+    --text:#0d1726;--muted:#55657f;
+    --accent:#0a74a6;--accentink:#ffffff;--accentbg:rgba(10,116,166,.10);
+    --amber:#b8530a;--amberbg:rgba(184,83,10,.09);--amberline:rgba(184,83,10,.5);--accentline:rgba(10,116,166,.5);
+  --ask:#5a3fd0;--askink:#ffffff;--askbg:rgba(90,63,208,.08);--askline:rgba(90,63,208,.45);
+  --mag:#b81d73;--magbg:rgba(184,29,115,.07);--magline:rgba(184,29,115,.45);--gold:#8a6200;
+  --glow1:rgba(90,63,208,.10);--glow2:rgba(10,116,166,.08);--ok:#0b8a52;--okbg:rgba(11,138,82,.09);--okglow:rgba(11,138,82,.35);
+    --bad:#c62f2f;--badbg:rgba(198,47,47,.08);--badglow:rgba(198,47,47,.35);
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#eef2f8;--grid:rgba(30,60,110,.06);--panel:#ffffff;--panel2:#f3f6fb;--line:#cbd5e5;
+  --text:#0d1726;--muted:#55657f;
+  --accent:#0a74a6;--accentink:#ffffff;--accentbg:rgba(10,116,166,.10);
+  --amber:#b8530a;--amberbg:rgba(184,83,10,.09);--amberline:rgba(184,83,10,.5);--accentline:rgba(10,116,166,.5);
+  --ask:#5a3fd0;--askink:#ffffff;--askbg:rgba(90,63,208,.08);--askline:rgba(90,63,208,.45);
+  --mag:#b81d73;--magbg:rgba(184,29,115,.07);--magline:rgba(184,29,115,.45);--gold:#8a6200;
+  --glow1:rgba(90,63,208,.10);--glow2:rgba(10,116,166,.08);--ok:#0b8a52;--okbg:rgba(11,138,82,.09);--okglow:rgba(11,138,82,.35);
+  --bad:#c62f2f;--badbg:rgba(198,47,47,.08);--badglow:rgba(198,47,47,.35);
+  color-scheme:light;
+}
+*{box-sizing:border-box;}
+[hidden]{display:none!important;}
+body{background-color:var(--bg);
+  background-image:radial-gradient(700px 480px at 0% 0%,var(--glow1),transparent 70%),radial-gradient(640px 480px at 100% 100%,var(--glow2),transparent 70%),linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:auto,auto,36px 36px,36px 36px;color:var(--text);font-family:var(--body);font-size:16px;line-height:1.45;
+  display:flex;flex-direction:column;align-items:center;padding-block:22px 48px;padding-inline:16px;min-height:100%;}
+.wrap{width:100%;max-width:620px;min-width:0;}
+.top{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+.top svg{width:42px;height:42px;flex-shrink:0;}
+.top h1{font-family:var(--display);font-size:1.6rem;font-weight:700;margin:0;letter-spacing:.14em;line-height:1;}
+.tag{color:var(--muted);margin:5px 0 0;font-size:.85rem;font-family:var(--mono);}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0;}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:16px;}
+h2{font-family:var(--display);font-weight:600;letter-spacing:.04em;margin:0;}
+label{display:block;font-weight:500;margin:14px 0 6px;font-size:.85rem;color:var(--muted);}
+input[type=text],select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);font-size:1rem;background:var(--panel2);color:var(--text);font-family:var(--body);}
+button{background:var(--accent);color:var(--accentink);border:1px solid transparent;padding:12px 20px;border-radius:10px;font-weight:600;font-size:.95rem;letter-spacing:.03em;cursor:pointer;font-family:var(--display);}
+button:hover{filter:brightness(1.1);}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+input:focus,select:focus{border-color:var(--accent);}
+button.sec{background:transparent;color:var(--text);border-color:var(--line);}
+button.sec:hover{border-color:var(--accent);filter:none;}
+button:disabled{opacity:.4;cursor:default;filter:none;}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.note{font-size:.75rem;color:var(--muted);margin:-2px 0 8px;}
+/* fases */
+.stepper{list-style:none;display:flex;gap:8px;padding:0;margin:0 0 14px;}
+.stepper li{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-family:var(--mono);font-size:.72rem;color:var(--muted);display:flex;gap:8px;align-items:baseline;background:var(--panel);}
+.stepper b{font-weight:600;letter-spacing:.06em;}
+.stepper li.on{border-color:var(--accent);color:var(--accent);background:var(--accentbg);}
+.stepper li.done{border-color:var(--ok);color:var(--ok);}
+.hud{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;}
+.hud h2{font-size:1.05rem;margin-top:4px;}
+.score{text-align:right;}
+.score span.v{display:block;font-family:var(--mono);font-weight:600;font-size:2rem;line-height:1;color:var(--gold);font-variant-numeric:tabular-nums;}
+.score.pop span.v{animation:pop .45s ease;}
+@keyframes pop{0%{transform:scale(1);}40%{transform:scale(1.12);}100%{transform:scale(1);}}
+.prog{display:flex;gap:6px;margin:14px 0 20px;}
+.prog i{flex:1;height:6px;border-radius:3px;background:var(--line);transition:background .25s;}
+.prog i.on{background:var(--accent);}
+.elem{margin:0 0 20px;padding:16px 16px 18px;background:var(--askbg);border:1px solid var(--askline);border-radius:12px;}
+.elem p{margin:0;}
+.pill-q{display:inline-block;font-family:var(--mono);font-size:.68rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;background:var(--ask);color:var(--askink);padding:3px 9px;border-radius:999px;}
+.elem #elem-text{font-family:var(--display);font-size:1.25rem;font-weight:600;line-height:1.35;margin-top:10px;overflow-wrap:anywhere;}
+.ans{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:0 0 10px;}
+.ans::before{content:"";width:22px;height:2px;background:var(--accent);border-radius:1px;flex-shrink:0;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:460px){.grid{grid-template-columns:1fr;}}
+#mass-options{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,auto);gap:10px;}
+@media(max-width:460px){#mass-options{grid-template-columns:1fr;}#mass-options .opt{grid-column:1 !important;grid-row:auto !important;}}
+.opt{display:flex;gap:10px;align-items:baseline;text-align:left;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:13px 14px;font-weight:500;font-family:var(--body);letter-spacing:0;font-size:.95rem;}
+.opt:hover{border-color:var(--accent);filter:none;}
+.opt.sel{border-color:var(--accent);background:var(--accentbg);box-shadow:inset 0 0 0 1px var(--accent);}
+.opt .code{font-family:var(--mono);color:var(--accent);font-weight:600;background:var(--accentbg);border:1px solid var(--accentline);border-radius:6px;padding:1px 7px;min-width:3em;text-align:center;flex-shrink:0;}
+.opt.sel .code{background:var(--accent);color:var(--accentink);}
+.opt[data-k="a"]{background:var(--accentbg);border-color:var(--accentline);}
+.opt[data-k="p"]{background:var(--amberbg);border-color:var(--amberline);}
+.opt[data-k="n"]{background:var(--magbg);border-color:var(--magline);}
+.opt[data-k="a"]:hover{border-color:var(--accent);} .opt[data-k="p"]:hover{border-color:var(--amber);} .opt[data-k="n"]:hover{border-color:var(--mag);}
+.hint{color:var(--muted);font-size:.85rem;margin:0 0 10px;font-family:var(--mono);}
+.feedback{font-family:var(--mono);font-size:.85rem;min-height:1.4em;margin-top:14px;overflow-wrap:anywhere;}
+.ok{color:var(--ok);} .bad{color:var(--bad);}
+.explain{background:var(--okbg);border:1px solid var(--ok);border-radius:10px;padding:12px 14px;font-size:.92rem;margin-top:12px;}
+.explain b{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ok);display:block;margin-bottom:3px;}
+.stat{font-family:var(--mono);font-size:.78rem;color:var(--muted);margin-top:8px;}
+.flash-ok{animation:flashok .7s ease;}
+.flash-bad{animation:flashbad .7s ease;}
+@keyframes flashok{0%{box-shadow:0 0 0 0 var(--okglow);border-color:var(--ok);}100%{box-shadow:0 0 0 16px transparent;}}
+@keyframes flashbad{0%{box-shadow:0 0 0 0 var(--badglow);border-color:var(--bad);}100%{box-shadow:0 0 0 16px transparent;}}
+@media (prefers-reduced-motion:reduce){.flash-ok,.flash-bad,.score.pop span.v{animation:none;}}
+.serial{font-family:var(--mono);font-size:.72rem;color:var(--muted);text-align:center;margin-top:12px;overflow-wrap:anywhere;}
+.scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:10px;}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;}
+th{background:var(--panel2);color:var(--muted);font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;}
+td.m{font-family:var(--mono);}
+.side-h{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;margin:14px 0 4px;}
+.side-h.a{color:var(--accent);} .side-h.p{color:var(--text);}
+.sub-h.k-a{color:var(--accent);} .sub-h.k-p{color:var(--amber);} .sub-h.k-n{color:var(--mag);}
+.sub-h{font-weight:600;font-size:.9rem;margin:10px 0 2px;}
+ul.bl{margin:0;padding-left:18px;font-size:.88rem;}
+.closing{text-align:center;color:var(--muted);font-size:.85rem;margin:20px 0 8px;}
+/* llibre major */
+.lhead{font-family:var(--display);font-weight:600;font-size:1.05rem;margin:0 0 4px;}
+.lrow{border:1px solid var(--line);background:var(--panel2);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+.lrow.good{border-color:var(--ok);}
+.lrow.wrong{border-color:var(--bad);}
+.lrow.good .ltxt{background:var(--okbg);border-bottom-color:var(--ok);}
+.lrow.wrong .ltxt{background:var(--badbg);border-bottom-color:var(--bad);}
+.ltxt{font-size:.95rem;font-weight:500;padding:12px 14px;background:var(--askbg);border-bottom:1px solid var(--askline);overflow-wrap:anywhere;}
+.lin{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px 14px;}
+.lin label,.lsum label{margin:0 0 4px;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;}
+.lin label.d{color:var(--accent);} .lin label.h{color:var(--amber);}
+input.amt{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);font-size:1rem;background:var(--panel);color:var(--text);text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);}
+input.amt:disabled,select:disabled{opacity:.7;}
+input.amt.d{border-color:var(--accentline);} input.amt.h{border-color:var(--amberline);}
+.lrow.good input.amt{border-color:var(--ok);} .lrow.wrong input.amt{border-color:var(--bad);}
+.lsum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.lsum .good input,.lsum .good select{border-color:var(--ok);}
+.lsum .wrong input,.lsum .wrong select{border-color:var(--bad);}
+.stageb-title{font-family:var(--display);font-weight:600;margin:18px 0 0;}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <svg viewBox="0 0 42 42" aria-hidden="true"><rect x="1.5" y="1.5" width="39" height="39" rx="10" fill="none" stroke="var(--line)" stroke-width="1.5"/><path d="M10 14H32" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><path d="M21 14V32" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><circle cx="14" cy="25" r="2" fill="var(--accent)"/><circle cx="28" cy="25" r="2" fill="var(--amber)"/></svg>
+    <div>
+      <h1>SUPERCONTA</h1>
+      <p class="tag">Entrenament de comptabilitat</p>
+    </div>
+  </header>
+
+  <ol class="stepper" id="stepper" hidden>
+    <li data-p="1"><b>F1</b><span>Masses</span></li>
+    <li data-p="2"><b>F2</b><span>Comptes</span></li>
+    <li data-p="3"><b>F3</b><span>Major</span></li>
+  </ol>
+
+  <!-- INICI -->
+  <section class="card" id="scr-start">
+    <h2>Identifica't</h2>
+    <label for="in-inicials">Les teves inicials</label>
+    <p class="note">Per protecció de dades, queda terminantment prohibit escriure el teu nom complet. Indica només les inicials.</p>
+    <input type="text" id="in-inicials" maxlength="6" placeholder="Ex: JGR" autocomplete="off">
+    <label for="in-curs">Curs</label>
+    <select id="in-curs">
+      <option value="">Tria el curs...</option>
+      <option>GA1A</option><option>GA1B</option><option>GA1C</option>
+    </select>
+    <div class="row" style="margin-top:20px;">
+      <button id="btn-start" type="button">Comença la Fase 1</button>
+    </div>
+    <p class="feedback bad" id="start-msg" aria-live="polite" style="text-align:center;"></p>
+    <p class="stat" id="boot" style="text-align:center;">Carregant…</p>
+  </section>
+
+  <!-- JOC -->
+  <section class="card" id="scr-game" hidden>
+    <div class="hud">
+      <div><p class="eyebrow">Fase en curs</p><h2 id="phase-tag"></h2></div>
+      <div class="score" id="xp-badge"><p class="eyebrow">Punts</p><span class="v" id="xp-num">000</span></div>
+    </div>
+    <div class="prog" id="prog"></div>
+
+    <div id="p12">
+      <div class="elem"><p><span class="pill-q" id="elem-label"></span></p><p id="elem-text"></p></div>
+      <p class="ans" id="ans-label"></p>
+      <div id="mass-options"></div>
+      <div id="acc-wrap" hidden>
+        <div id="acc-options" class="grid"></div>
+        <div class="row" style="margin-top:14px;"><button id="btn-check">Comprova</button></div>
+      </div>
+      <div id="explain" class="explain" hidden></div>
+      <div class="row" style="margin-top:12px;"><button id="btn-continue" hidden>Continua →</button></div>
+    </div>
+
+    <div id="ledger" hidden></div>
+
+    <p class="feedback" id="feedback" aria-live="polite"></p>
+    <div class="stat" id="stat-pending"></div>
+  </section>
+
+  <!-- RESULTATS -->
+  <section class="card" id="scr-balance" hidden>
+    <p class="eyebrow">Resultats</p>
+    <h2 id="bal-title" style="margin-top:4px;"></h2>
+    <p id="bal-points" style="font-family:var(--mono);color:var(--gold);margin:8px 0 0;"></p>
+    <div id="bal-content"></div>
+    <div class="row" style="margin-top:20px;">
+      <button class="sec" id="btn-pdf">Descarrega PDF</button>
+      <button class="sec" id="btn-repeat"></button>
+      <button id="btn-next"></button>
+    </div>
+    <p class="serial" id="serial-line"></p>
+    <p class="closing">Vols millorar la teva pròpia marca?</p>
+    <div class="row">
+      <button class="sec" id="btn-restart">Torna a començar</button>
+    </div>
+  </section>
+</div>
+
+<script>
+window.addEventListener('error',function(e){var m=document.getElementById('start-msg');if(m)m.textContent='Error: '+e.message+' (línia '+e.lineno+')';});
+</script>
+<script>
+(function(){
+/* ---------- DADES ---------- */
+const DATA = [
+ ["Un camió propietat de l'empresa.","Actiu no corrent"],
+ ["Préstec bancari a retornar en 6 anys.","Passiu no corrent"],
+ ["Deutes d'alguns clients per la venda de productes.","Actiu corrent"],
+ ["Factura pendent de cobrament per venda de productes.","Actiu corrent"],
+ ["Diners en comptes corrents bancaris.","Actiu corrent"],
+ ["Factura pendent de pagament per compra de productes.","Passiu corrent"],
+ ["Mobiliari de l'empresa.","Actiu no corrent"],
+ ["Patent de l'empresa.","Actiu no corrent"],
+ ["Deute amb Hisenda per liquidació d'IVA.","Passiu corrent"],
+ ["Lletres de canvi a 90 dies pendents de cobrament.","Actiu corrent"],
+ ["Capital social.","Patrimoni net"],
+ ["Lletres de canvi a 60 dies, pendents de pagament.","Passiu corrent"],
+ ["Diners en efectiu.","Actiu corrent"],
+ ["Solar propietat de l'empresa.","Actiu no corrent"],
+ ["Un local comercial propietat de l'empresa.","Actiu no corrent"],
+ ["Préstec bancari a retornar en 9 mesos.","Passiu corrent"],
+ ["Factura pendent de pagament a 2 anys, per compra de maquinària.","Passiu no corrent"],
+ ["Equipaments informàtics.","Actiu no corrent"],
+ ["Un programa informàtic.","Actiu no corrent"],
+ ["Maquinària.","Actiu no corrent"],
+ ["Estoc de matèria prima.","Actiu corrent"],
+ ["Estoc de productes per vendre.","Actiu corrent"],
+ ["Benefici acumulat.","Patrimoni net"]
+];
+const ACC = {
+ 100:"Capital social",129:"Resultat de l'exercici",170:"Deutes a llarg termini amb entitats de crèdit",
+ 173:"Proveïdors d'immobilitzat a llarg termini",203:"Propietat industrial",206:"Aplicacions informàtiques",
+ 210:"Terrenys i béns naturals",211:"Construccions",212:"Instal·lacions tècniques",213:"Maquinària",214:"Utillatge",
+ 215:"Altres instal·lacions",216:"Mobiliari",217:"EPI",218:"Elements de transport",219:"Un altre immobilitzat material",
+ 300:"Mercaderies A",400:"Proveïdors",410:"Creditors per prestacions de serveis",430:"Clients",440:"Deutors",
+ 520:"Deutes a curt termini amb entitats de crèdit",523:"Proveïdors d'immobilitzat a curt termini",
+ 570:"Caixa, euros",572:"Bancs i institucions de crèdit c/c vista, euros"
+};
+const E_BUY = "Les mercaderies es registren al compte 300. El deute amb el proveïdor va a Proveïdors (400).";
+const E_SELL = "Les mercaderies es registren al compte 300. Encara no s'ha cobrat, així que el dret de cobrament va a Clients (430).";
+// t: enunciat · sets: combinacions de comptes vàlides · opts: comptes que es mostren · e: explicació
+const OPS = [
+ {t:"Es constitueix una empresa amb 60.000 € que es dipositen al compte corrent bancari.",
+  sets:[[572,100]], opts:[572,100,129,170,570,430,400,520],
+  e:"Bancs (572) pels diners ingressats i Capital social (100) pel que aporten els socis."},
+ {t:"Compra un ordinador per 750 € que pagarà a 90 dies.",
+  sets:[[217,523]], opts:[217,523,206,216,400,173,572,410],
+  e:"L'ordinador és un EPI (217). Es paga en menys d'un any a un proveïdor d'immobilitzat: 523. Proveïdors (400) és només per a mercaderies."},
+ {t:"Compra una furgoneta de repartiment per 30.000 €. S'acorda el pagament de 1.000 € al comptat amb un xec i la resta en 18 mesos.",
+  sets:[[218,523,173,572]], opts:[218,572,173,523,400,570,213,170],
+  e:"1) Compra: Elements de transport (218) pels 30.000 € i es genera tot el deute: 1.000 € que es pagaran de seguida a Proveïdors d'immobilitzat a c/t (523) i 29.000 € a 18 mesos a l/t (173). 2) Pagament: 1.000 € amb xec; baixa el 523 i baixa Bancs (572)."},
+ {t:"Compra una màquina per 16.000 € que es pagarà en 3 terminis: un 25% en 3 mesos, un 25% en 6 mesos i la resta en 18 mesos.",
+  sets:[[213,523,173]], opts:[213,523,173,214,400,170,572,520],
+  e:"Maquinària (213). El 25% + 25% (8.000 €) es paga en menys d'un any: 523. El 50% restant (8.000 €) a 18 mesos: 173."},
+ {t:"Es demana un préstec bancari de 3.000 € que es tornarà en 3 mesos.",
+  sets:[[572,520]], opts:[572,520,170,100,570,400,430,523],
+  e:"Entren diners al banc (572) i el deute es retorna en menys d'un any: curt termini (520)."},
+ {t:"Es demana un préstec bancari de 30.000 € que es pagarà d'aquí a 2 anys.",
+  sets:[[572,170]], opts:[572,170,520,173,100,570,523,400],
+  e:"Bancs (572) pels diners rebuts. A 2 anys és llarg termini: 170."},
+ {t:"Es demana un préstec bancari de 15.000 € que es retornarà en 3 anualitats.",
+  sets:[[572,170,520]], opts:[572,170,520,173,100,570,523,400],
+  e:"La quota del primer any (5.000 €) és curt termini (520) i les altres dues (10.000 €) llarg termini (170). Els diners entren al banc (572)."},
+ {t:"Compra mercaderies per 3.000 € a crèdit.",
+  sets:[[300,400]], opts:[300,400,410,523,430,440,572,570], e:E_BUY},
+ {t:"Compra mercaderies per 5.000 € a crèdit.",
+  sets:[[300,400]], opts:[300,400,410,523,173,570,430,217], e:E_BUY},
+ {t:"Compra mercaderies per 1.500 € a crèdit.",
+  sets:[[300,400]], opts:[300,400,440,520,430,572,410,129], e:E_BUY},
+ {t:"Compra mercaderies per 10.000 €. Es paga un 10% al comptat en efectiu i la resta a 30 dies.",
+  sets:[[300,400,570]], opts:[300,400,570,572,523,410,430,520],
+  e:"1) Compra: Mercaderies (300) i Proveïdors (400) pels 10.000 € complets. 2) Pagament: 1.000 € en efectiu; baixa Proveïdors (400) i baixa Caixa (570). Els 9.000 € restants queden pendents a Proveïdors."},
+ {t:"Ven mercaderies per 4.000 € a crèdit.",
+  sets:[[300,430]], opts:[300,430,440,400,570,572,100,129], e:E_SELL},
+ {t:"Ven mercaderies per 6.000 € a crèdit.",
+  sets:[[300,430]], opts:[300,430,440,400,410,572,129,100], e:E_SELL},
+ {t:"Ven mercaderies per 3.500 € a crèdit.",
+  sets:[[300,430]], opts:[300,430,440,400,570,520,100,523], e:E_SELL},
+ {t:"Ven mercaderies per 8.000 €. Es cobra un 10% al comptat per transferència i la resta a 30 dies.",
+  sets:[[300,430,572]], opts:[300,430,570,572,440,400,410,129],
+  e:"1) Venda: Mercaderies (300) i Clients (430) pels 8.000 € complets. 2) Cobrament: 800 € per transferència; baixa Clients (430) i puja Bancs (572). Els 7.200 € restants queden pendents a Clients."}
+];
+// Llibre major: [text, import, D|H]
+const LEDGER = {
+ 572:{sc:[
+  [["Es constitueix la societat amb 20.000 € que s'ingressen al compte bancari.",20000,"D"],
+   ["Es demana un préstec bancari de 8.000 € que s'ingressa al compte.",8000,"D"],
+   ["Es paga amb xec el 25% d'una màquina de 10.000 €.",2500,"H"],
+   ["Un client paga per transferència una factura de 3.000 €.",3000,"D"],
+   ["Es paga per transferència una factura de 4.500 € a un proveïdor.",4500,"H"],
+   ["Es retorna una part del préstec: 2.000 €.",2000,"H"]],
+  [["Es constitueix la societat amb 5.000 € que s'ingressen al banc.",5000,"D"],
+   ["Es paga amb xec una furgoneta de 6.000 €.",6000,"H"],
+   ["Un client ingressa 2.000 € per transferència.",2000,"D"],
+   ["Es paga per transferència una factura de 1.500 € a un proveïdor.",1500,"H"],
+   ["Es paga una quota de 800 € del préstec bancari.",800,"H"]],
+  [["Es constitueix la societat amb 10.000 € que s'ingressen al banc.",10000,"D"],
+   ["Es paga amb xec una furgoneta de 4.000 €.",4000,"H"],
+   ["Un client paga per transferència 2.500 €.",2500,"D"],
+   ["Es paga per transferència una factura de 3.500 € a un proveïdor.",3500,"H"],
+   ["Es cancel·la anticipadament un préstec bancari de 5.000 €.",5000,"H"]]]},
+ 430:{sc:[
+  [["Ven mercaderies per 4.000 € a crèdit.",4000,"D"],
+   ["Ven mercaderies per 6.000 € a crèdit.",6000,"D"],
+   ["Un client paga 2.500 € de la seva factura.",2500,"H"],
+   ["Ven mercaderies per 3.500 € a crèdit.",3500,"D"],
+   ["Un client liquida 4.000 € que devia.",4000,"H"]],
+  [["Ven mercaderies per 8.000 €; es cobra un 10% al comptat per transferència i la resta a 30 dies.",8000,"D"],
+   ["Es cobra per transferència el 10% al comptat de la venda anterior.",800,"H"],
+   ["Ven mercaderies per 5.000 € a crèdit.",5000,"D"],
+   ["Es cobren els 7.200 € restants de la primera venda.",7200,"H"],
+   ["Ven mercaderies per 6.000 € a crèdit.",6000,"D"],
+   ["Un client paga 3.000 € a compte de la seva factura.",3000,"H"]],
+  [["Ven mercaderies per 5.000 € a crèdit.",5000,"D"],
+   ["Ven mercaderies per 2.000 € a crèdit.",2000,"D"],
+   ["Es cobren els 5.000 € de la primera venda.",5000,"H"],
+   ["Ven mercaderies per 1.500 € a crèdit.",1500,"D"],
+   ["Es cobren 2.000 € de la segona venda.",2000,"H"],
+   ["Es cobren 1.500 € de la tercera venda.",1500,"H"]]]},
+ 400:{sc:[
+  [["Compra mercaderies per 3.000 € a crèdit.",3000,"H"],
+   ["Compra mercaderies per 5.000 € a crèdit.",5000,"H"],
+   ["Es paga 2.000 € a un proveïdor.",2000,"D"],
+   ["Compra mercaderies per 1.500 € a crèdit.",1500,"H"],
+   ["Es paga 3.000 € a un proveïdor.",3000,"D"]],
+  [["Compra mercaderies per 10.000 €; un 10% es paga al comptat en efectiu i la resta a 30 dies.",10000,"H"],
+   ["Es paga en efectiu el 10% al comptat de la compra anterior.",1000,"D"],
+   ["Es paga 4.000 € a un proveïdor.",4000,"D"],
+   ["Compra mercaderies per 2.000 € a crèdit.",2000,"H"],
+   ["Es paga els 5.000 € restants de la primera compra.",5000,"D"],
+   ["Es paga la factura de 2.000 €.",2000,"D"]],
+  [["Compra mercaderies per 7.000 € a crèdit.",7000,"H"],
+   ["Compra mercaderies per 1.500 € a crèdit.",1500,"H"],
+   ["Es paga 3.500 € a un proveïdor.",3500,"D"],
+   ["Compra mercaderies per 4.000 € a crèdit.",4000,"H"],
+   ["Es paga 1.000 € a un proveïdor.",1000,"D"]]]},
+ 523:{sc:[
+  [["Compra un ordinador per 750 € que pagarà a 90 dies.",750,"H"],
+   ["Compra una màquina per 16.000 €; el 25% (4.000 €) es pagarà en 3 mesos.",4000,"H"],
+   ["De la mateixa màquina, un altre 25% (4.000 €) es pagarà en 6 mesos.",4000,"H"],
+   ["Es paga l'ordinador.",750,"D"],
+   ["Es paga el primer termini de la màquina.",4000,"D"]],
+  [["Compra un ordinador per 750 € que pagarà a 90 dies.",750,"H"],
+   ["Compra mobiliari per 1.200 € que pagarà a 60 dies.",1200,"H"],
+   ["Es paga l'ordinador.",750,"D"],
+   ["Es paga el mobiliari.",1200,"D"]],
+  [["Compra equips informàtics per 2.400 €: 400 € es paguen de seguida amb xec i la resta a 90 dies.",2400,"H"],
+   ["Es paguen amb xec els 400 € al comptat dels equips.",400,"D"],
+   ["Compra utillatge per 900 € a pagar a 60 dies.",900,"H"],
+   ["Es paga l'utillatge.",900,"D"],
+   ["Compra més equips per 1.100 € a pagar a 90 dies.",1100,"H"],
+   ["Es paguen els 2.000 € restants dels primers equips.",2000,"D"]]]}
+};
+const LORDER = [572,430,400,523];
+
+/* ---------- UTILITATS ---------- */
+const $ = id => document.getElementById(id);
+// Els botons fixos es gestionen amb un únic listener al document: així continuen funcionant encara que el visor refaci el DOM o torni a executar l'script.
+const HANDLERS = {};
+const LAST = {};
+function once(id,fn){ return function(e){ const t=Date.now(); if(LAST[id] && t-LAST[id]<400) return; LAST[id]=t; return fn.call(this,e); }; }
+function reg(){ for(let i=0;i<arguments.length;i++){ const id=arguments[i], el=$(id); if(el && el.onclick){ const f=once(id,el.onclick); HANDLERS[id]=f; el.onclick=f; } } }
+const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const parseAmt = s => { s=String(s||'').trim().replace(/\./g,'').replace(',','.'); const v=Number(s); return isNaN(v)?NaN:v; };
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function pointsForAttempt(n){ return Math.max(2, 12-(n-1)*2); }
+function fmtDate(d){return d.toLocaleDateString('ca-ES')+' '+d.toLocaleTimeString('ca-ES',{hour:'2-digit',minute:'2-digit'});}
+function makeSerial(ini,curs){
+  const now=new Date(), p=n=>String(n).padStart(2,'0');
+  const stamp=`${now.getFullYear()}${p(now.getMonth()+1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`;
+  return `SC-${curs}-${ini.toUpperCase()}-${stamp}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;
+}
+// tria n ids donant prioritat als que no han sortit encara (així una nova partida no repeteix)
+function pick(n, ids, seen){
+  let fresh = shuffle(ids.filter(i=>!seen.has(i)));
+  let chosen = fresh.slice(0,n);
+  if(chosen.length<n){
+    seen.clear();
+    chosen = chosen.concat(shuffle(ids.filter(i=>!chosen.includes(i))).slice(0,n-chosen.length));
+  }
+  chosen.forEach(i=>seen.add(i));
+  return shuffle(chosen);
+}
+const accLabel = c => `(${c}) ${ACC[c]}`;
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+
+/* ---------- ESTAT ---------- */
+const seen = {1:new Set(),2:new Set(),3:new Set()};
+const G = {ini:"",curs:"",serial:"",startedAt:null,phase:1,runs:{1:0,2:0,3:0},
+  xp:0,queue:[],att:{},res:[],total:0,cur:null,sel:new Set(),accs:[],idx:0,stageA:0,stageB:0,ptsA:0,ptsB:0,locked:false};
+const PHASE_NAMES = {1:"Fase 1 · Masses patrimonials",2:"Fase 2 · Operacions i comptes",3:"Fase 3 · Llibre major"};
+const HAPPY = ["Correcte.","Exacte.","Clavat.","Net.","Perfecte."];
+
+function setStepper(p, done){
+  document.querySelectorAll('#stepper li').forEach(li=>{
+    const n=Number(li.dataset.p);
+    li.className = n<p ? 'done' : n===p ? (done?'done':'on') : '';
+  });
+}
+function setProg(done,total){
+  $('prog').innerHTML = Array.from({length:total},(_,i)=>`<i class="${i<done?'on':''}"></i>`).join('');
+}
+function flash(kind){
+  const c=$('scr-game'); c.classList.remove('flash-ok','flash-bad'); void c.offsetWidth;
+  c.classList.add(kind==='ok'?'flash-ok':'flash-bad');
+}
+function bumpXp(){
+  $('xp-num').textContent = String(G.xp).padStart(3,'0');
+  const b=$('xp-badge'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+}
+
+$('btn-start').onclick = ()=>{
+  const ini = $('in-inicials').value.trim(), curs = $('in-curs').value;
+  if(!ini || !curs){
+    $('start-msg').textContent = !ini ? "Escriu les teves inicials per començar." : "Tria el curs per començar.";
+    $('in-inicials').style.borderColor = ini?'':'var(--bad)'; $('in-curs').style.borderColor = curs?'':'var(--bad)'; return;
+  }
+  $('start-msg').textContent = '';
+  G.ini=ini; G.curs=curs; G.serial=makeSerial(ini,curs); G.startedAt=new Date();
+  G.runs={1:0,2:0,3:0};
+  startPhase(1);
+};
+
+function startPhase(n){
+  G.phase=n; G.runs[n]++; G.xp=0; G.res=[]; G.att={}; G.locked=false;
+  $('scr-start').hidden=true; $('scr-balance').hidden=true; $('scr-game').hidden=false; $('stepper').hidden=false;
+  setStepper(n,false);
+  $('phase-tag').textContent = PHASE_NAMES[n];
+  $('xp-num').textContent = '000';
+  $('p12').hidden = n===3; $('ledger').hidden = n!==3;
+  $('mass-options').hidden = n!==1; $('acc-wrap').hidden = n!==2;
+  if(n===1){
+    const ids = pick(6, DATA.map((_,i)=>i), seen[1]);
+    G.queue=[...ids]; G.total=ids.length; ids.forEach(i=>G.att[i]=0); nextItem();
+  } else if(n===2){
+    const ids = pick(6, OPS.map((_,i)=>i), seen[2]);
+    G.queue=[...ids]; G.total=ids.length; ids.forEach(i=>G.att[i]=0); nextItem();
+  } else {
+    G.accs = LORDER.map(code=>{
+      const pool = LEDGER[code].sc.map((_,i)=>code*10+i);
+      const id = pick(1,pool,seen[3])[0];
+      return {code, sc:id-code*10};
+    });
+    G.total=G.accs.length; G.idx=0; nextAccount();
+  }
+}
+
+/* ---------- FASES 1 i 2 ---------- */
+const MASS_LAYOUT = [
+  {m:"Actiu no corrent", col:1, row:1, k:"a"},{m:"Actiu corrent", col:1, row:2, k:"a"},
+  {m:"Patrimoni net", col:2, row:1, k:"n"},{m:"Passiu no corrent", col:2, row:2, k:"p"},{m:"Passiu corrent", col:2, row:3, k:"p"}
+];
+const MASS_K = {"Actiu no corrent":"a","Actiu corrent":"a","Patrimoni net":"n","Passiu no corrent":"p","Passiu corrent":"p"};
+function nextItem(){
+  const done = G.total - G.queue.length;
+  setProg(done, G.total);
+  $('stat-pending').textContent = `Pendents: ${G.queue.length} / ${G.total}`;
+  $('feedback').textContent=''; $('explain').hidden=true; $('btn-continue').hidden=true; G.locked=false;
+  if(!G.queue.length){ finishPhase(); return; }
+  G.cur = G.queue[0];
+  if(G.phase===1){
+    $('elem-label').textContent = 'Pregunta · element';
+    $('ans-label').textContent = 'Resposta · tria la massa patrimonial';
+    $('elem-text').textContent = DATA[G.cur][0];
+    const box=$('mass-options'); box.innerHTML='';
+    MASS_LAYOUT.forEach(pos=>{
+      const b=document.createElement('button');
+      b.className='opt'; b.dataset.k=pos.k; b.textContent=pos.m; b.style.gridColumn=pos.col; b.style.gridRow=pos.row;
+      b.onclick=()=>{ if(!G.locked) answer(pos.m===DATA[G.cur][1]); };
+      box.appendChild(b);
+    });
+  } else {
+    const op = OPS[G.cur];
+    $('elem-label').textContent = 'Pregunta · operació';
+    $('elem-text').textContent = op.t;
+    $('ans-label').textContent = `Resposta · tria els ${op.sets[0].length} comptes que hi intervenen`;
+    G.sel = new Set();
+    const box=$('acc-options'); box.innerHTML='';
+    shuffle(op.opts).forEach(code=>{
+      const b=document.createElement('button');
+      b.className='opt'; b.setAttribute('aria-pressed','false');
+      b.innerHTML = `<span class="code">${code}</span><span>${ACC[code]}</span>`;
+      b.onclick=()=>{
+        if(G.locked) return;
+        if(G.sel.has(code)){G.sel.delete(code); b.classList.remove('sel');b.setAttribute('aria-pressed','false');}
+        else {G.sel.add(code); b.classList.add('sel');b.setAttribute('aria-pressed','true');}
+      };
+      box.appendChild(b);
+    });
+    $('btn-check').disabled=false;
+  }
+}
+$('btn-check').onclick = ()=>{
+  if(G.locked) return;
+  if(!G.sel.size){ $('feedback').innerHTML='<span class="bad">Tria algun compte primer.</span>'; return; }
+  const ok = OPS[G.cur].sets.some(s=>s.length===G.sel.size && s.every(c=>G.sel.has(c)));
+  answer(ok);
+};
+$('btn-continue').onclick = ()=>nextItem();
+
+function answer(ok){
+  G.locked=true;
+  G.att[G.cur]++;
+  const fb=$('feedback');
+  document.querySelectorAll('#mass-options button, #acc-options button, #btn-check').forEach(b=>b.disabled=true);
+  if(ok){
+    const earned = pointsForAttempt(G.att[G.cur]);
+    G.xp += earned; bumpXp();
+    G.res.push({id:G.cur, att:G.att[G.cur], pts:earned});
+    G.queue.shift();
+    flash('ok');
+    fb.innerHTML = `<span class="ok">${rnd(HAPPY)} +${earned} punts · intent ${G.att[G.cur]}</span>`;
+    setProg(G.total - G.queue.length, G.total);
+    $('stat-pending').textContent = `Pendents: ${G.queue.length} / ${G.total}`;
+    if(G.phase===2){
+      $('explain').innerHTML = '<b>Per què</b>'+OPS[G.cur].e; $('explain').hidden=false;
+      const c=$('btn-continue'); c.hidden=false; c.disabled=false; c.focus();
+    } else setTimeout(nextItem, 900);
+  } else {
+    // l'errada va al final de la cua i tornarà a sortir
+    G.queue.push(G.queue.shift());
+    flash('bad');
+    fb.innerHTML = `<span class="bad">${G.phase===1?"Massa patrimonial incorrecta.":"Els comptes no són els correctes."} Tornarà a sortir més endavant.</span>`;
+    setTimeout(nextItem, 1300);
+  }
+}
+
+/* ---------- FASE 3: LLIBRE MAJOR ---------- */
+function nextAccount(){
+  setProg(G.idx, G.total);
+  $('stat-pending').textContent = `Comptes: ${G.idx} / ${G.total}`;
+  $('feedback').textContent='';
+  if(G.idx>=G.total){ finishPhase(); return; }
+  const a = G.accs[G.idx]; a.ops = LEDGER[a.code].sc[a.sc];
+  a.sumD = a.ops.filter(o=>o[2]==="D").reduce((s,o)=>s+o[1],0);
+  a.sumH = a.ops.filter(o=>o[2]==="H").reduce((s,o)=>s+o[1],0);
+  a.saldo = Math.abs(a.sumD-a.sumH);
+  a.tipus = a.sumD>a.sumH ? "Deutor" : a.sumD<a.sumH ? "Creditor" : "Nul";
+  G.stageA=0; G.stageB=0; G.ptsA=0; G.ptsB=0; G.locked=false;
+  let h = `<p class="lhead">${accLabel(a.code)}</p>
+    <p class="hint">Escriu cada import al Deure o a l'Haver del compte (una sola casella per operació).</p>`;
+  a.ops.forEach((o,i)=>{
+    h += `<div class="lrow" id="lr-${i}"><div class="ltxt">${o[0]}</div>
+      <div class="lin"><div><label class="d" for="d-${i}">Deure</label><input class="amt d" id="d-${i}" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+      <div><label class="h" for="h-${i}">Haver</label><input class="amt h" id="h-${i}" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div></div></div>`;
+  });
+  h += `<div class="row" style="margin-top:12px;"><button id="btn-checkA">Comprova els imports</button></div>
+    <div id="stageB" hidden>
+      <p class="stageb-title">Ara calcula el saldo</p>
+      <div class="lsum">
+        <div id="g-td"><label for="in-td">Total Deure</label><input class="amt d" id="in-td" type="text" inputmode="decimal" autocomplete="off"></div>
+        <div id="g-th"><label for="in-th">Total Haver</label><input class="amt h" id="in-th" type="text" inputmode="decimal" autocomplete="off"></div>
+        <div id="g-sa"><label for="in-sa">Saldo (import)</label><input class="amt" id="in-sa" type="text" inputmode="decimal" autocomplete="off"></div>
+        <div id="g-ty"><label for="in-ty">Tipus de saldo</label><select id="in-ty"><option value="">Tria...</option><option>Deutor</option><option>Creditor</option><option>Nul</option></select></div>
+      </div>
+      <div class="row" style="margin-top:14px;"><button id="btn-checkB">Comprova el saldo</button></div>
+    </div>
+    <div class="row" style="margin-top:12px;"><button id="btn-nextAcc" hidden>Continua →</button></div>`;
+  $('ledger').innerHTML = h;
+  $('btn-checkA').onclick = checkA; $('btn-checkB').onclick = checkB;
+  $('btn-nextAcc').onclick = ()=>{ G.idx++; nextAccount(); };
+  reg('btn-checkA','btn-checkB','btn-nextAcc');
+}
+function checkA(){
+  const a=G.accs[G.idx]; G.stageA++;
+  let all=true;
+  a.ops.forEach((o,i)=>{
+    const d=parseAmt($('d-'+i).value), h=parseAmt($('h-'+i).value);
+    const dv=isNaN(d)?-1:d, hv=isNaN(h)?-1:h;
+    const ok = o[2]==="D" ? (dv===o[1] && hv===0) : (hv===o[1] && dv===0);
+    const row=$('lr-'+i); row.classList.toggle('good',ok); row.classList.toggle('wrong',!ok);
+    if(!ok) all=false;
+  });
+  const fb=$('feedback');
+  if(all){
+    G.ptsA = pointsForAttempt(G.stageA); G.xp += G.ptsA; bumpXp();
+    flash('ok');
+    fb.innerHTML=`<span class="ok">${rnd(HAPPY)} Imports correctes. +${G.ptsA} punts · intent ${G.stageA}</span>`;
+    a.ops.forEach((_,i)=>{ $('d-'+i).disabled=true; $('h-'+i).disabled=true; });
+    $('btn-checkA').hidden=true; $('stageB').hidden=false; $('in-td').focus();
+  } else {
+    flash('bad');
+    fb.innerHTML=`<span class="bad">Hi ha imports mal col·locats o mal escrits (en vermell). Repassa'ls.</span>`;
+  }
+}
+function checkB(){
+  const a=G.accs[G.idx]; G.stageB++;
+  const td=parseAmt($('in-td').value), th=parseAmt($('in-th').value), sa=parseAmt($('in-sa').value);
+  const saV = $('in-sa').value.trim()==='' ? 0 : sa;
+  const ty=$('in-ty').value;
+  const r = {td:td===a.sumD, th:th===a.sumH, sa:saV===a.saldo, ty:ty===a.tipus};
+  Object.keys(r).forEach(k=>{ const g=$('g-'+k); g.classList.toggle('good',r[k]); g.classList.toggle('wrong',!r[k]); });
+  const fb=$('feedback');
+  if(r.td&&r.th&&r.sa&&r.ty){
+    G.ptsB = pointsForAttempt(G.stageB); G.xp += G.ptsB; bumpXp();
+    G.res.push({code:a.code, saldo:a.saldo, tipus:a.tipus, attA:G.stageA, attB:G.stageB, pts:G.ptsA+G.ptsB});
+    flash('ok');
+    const txt = a.tipus==="Nul" ? "saldo nul (el compte queda saldat)" : `saldo ${a.tipus.toLowerCase()} de ${fmt(a.saldo)} €`;
+    fb.innerHTML=`<span class="ok">${rnd(HAPPY)} ${accLabel(a.code)}: ${txt}. +${G.ptsB} punts · intent ${G.stageB}</span>`;
+    ['in-td','in-th','in-sa','in-ty'].forEach(i=>$(i).disabled=true);
+    $('btn-checkB').hidden=true;
+    const n=$('btn-nextAcc'); n.hidden=false; n.textContent = G.idx===G.total-1 ? "Veure resultats →" : "Continua amb el següent compte →"; n.focus();
+    setProg(G.idx+1, G.total);
+  } else {
+    flash('bad');
+    fb.innerHTML=`<span class="bad">Alguna cosa no quadra (en vermell). Recorda: saldo = diferència entre els dos totals.</span>`;
+  }
+}
+
+/* ---------- RESULTATS ---------- */
+const OBS = ["Repassa aquest concepte, encara no l'has acabat de dominar.","Dedica-li un cop d'ull extra la propera vegada.","Aquest te n'ha costat una mica, val la pena repassar-lo.","Fixa't bé en aquest per a la propera sessió de repàs."];
+const obsFor = id => OBS[id%OBS.length];
+function buildReport(){
+  const p=G.phase;
+  if(p===1) return {
+    headers:["Element","Massa patrimonial","Intents","Observació"], widths:[62,42,16,62],
+    rows:G.res.map(r=>[DATA[r.id][0],DATA[r.id][1],String(r.att),r.att>3?obsFor(r.id):""])
+  };
+  if(p===2) return {
+    headers:["Operació","Comptes correctes","Intents","Observació"], widths:[66,58,14,44],
+    rows:G.res.map(r=>[OPS[r.id].t, OPS[r.id].sets[0].map(accLabel).join("; "), String(r.att), r.att>3?obsFor(r.id):""])
+  };
+  return {
+    headers:["Compte","Saldo","Intents","Observació"], widths:[66,56,26,34],
+    rows:G.res.map(r=>[accLabel(r.code), r.tipus==="Nul"?"Nul (0 €)":`${r.tipus} ${fmt(r.saldo)} €`, `Imports ${r.attA} · Saldo ${r.attB}`, (r.attA>3||r.attB>3)?"Repassar":""])
+  };
+}
+function finishPhase(){
+  const p=G.phase;
+  $('scr-game').hidden=true; $('scr-balance').hidden=false; setStepper(p,true);
+  $('bal-title').textContent = `${PHASE_NAMES[p]} completada`;
+  $('bal-points').textContent = `${G.xp} punts en aquesta fase`;
+  let html='';
+  if(p===1){
+    const items=G.res.map(r=>DATA[r.id]);
+    const side=(title,cls,ms)=>{
+      let s=`<div><p class="side-h ${cls}">${title}</p>`;
+      ms.forEach(m=>{ const l=items.filter(d=>d[1]===m); if(l.length) s+=`<p class="sub-h k-${MASS_K[m]}">${m}</p><ul class="bl">${l.map(d=>`<li>${d[0]}</li>`).join('')}</ul>`; });
+      return s+'</div>';
+    };
+    html='<div class="grid" style="margin-top:6px;">'+side('Actiu','a',["Actiu no corrent","Actiu corrent"])+side('Patrimoni net i passiu','p',["Patrimoni net","Passiu no corrent","Passiu corrent"])+'</div>';
+  } else if(p===2){
+    html='<div class="scroll"><table><tr><th>Operació</th><th>Comptes</th></tr>'+
+      G.res.map(r=>`<tr><td>${OPS[r.id].t}</td><td class="m">${OPS[r.id].sets[0].map(accLabel).join('<br>')}</td></tr>`).join('')+'</table></div>';
+  } else {
+    html='<div class="scroll"><table><tr><th>Compte</th><th>Saldo</th></tr>'+
+      G.res.map(r=>`<tr><td>${accLabel(r.code)}</td><td class="m">${r.tipus==="Nul"?"Nul (0 €)":r.tipus+" "+fmt(r.saldo)+" €"}</td></tr>`).join('')+'</table></div>';
+  }
+  $('bal-content').innerHTML=html;
+  $('serial-line').textContent = `Núm. de sèrie: ${serialFor()}`;
+  $('btn-repeat').textContent = `Repeteix la Fase ${p}`;
+  $('btn-repeat').onclick = ()=>startPhase(p);
+  const nb=$('btn-next');
+  nb.hidden = p===3;
+  nb.textContent = `Continua a la Fase ${p+1} →`;
+  nb.onclick = ()=>startPhase(p+1);
+  reg('btn-repeat','btn-next');
+}
+function serialFor(){ return `${G.serial}-F${G.phase}${G.runs[G.phase]>1?'-R'+G.runs[G.phase]:''}`; }
+
+$('btn-pdf').onclick = generatePDF;
+$('btn-restart').onclick = ()=>{
+  G.serial=makeSerial(G.ini,G.curs); G.startedAt=new Date(); G.runs={1:0,2:0,3:0};
+  startPhase(1);
+};
+
+const pdfClean = s => String(s).replace(/€/g,'EUR');
+async function generatePDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const now = new Date(), phase=G.phase, rep=buildReport();
+  doc.setFontSize(16); doc.setTextColor(10,100,140);
+  doc.text(pdfClean(`Superconta — Resultats ${PHASE_NAMES[phase]}`), 14, 18);
+  doc.setFontSize(10); doc.setTextColor(30,40,60);
+  doc.text(`Alumne (inicials): ${G.ini}    Curs: ${G.curs}`, 14, 28);
+  doc.text(`Inici de l'activitat: ${fmtDate(G.startedAt)}`, 14, 34);
+  doc.text(`Final de la Fase ${phase}: ${fmtDate(now)}`, 14, 40);
+  doc.text(`Número de sèrie del document: ${serialFor()}`, 14, 46);
+  doc.text(`Punts acumulats: ${G.xp}`, 14, 52);
+  let y=62;
+  doc.setFontSize(11); doc.text(`Detall de la fase (${G.res.length} ${phase===3?'comptes':phase===2?'operacions':'elements'})`, 14, y); y+=6;
+  doc.setFontSize(8);
+  let x=14; doc.setFillColor(214,232,244); doc.rect(14,y-4,182,6,'F');
+  rep.headers.forEach((h,i)=>{ doc.text(h, x+2, y); x+=rep.widths[i]; });
+  y+=6;
+  rep.rows.forEach(row=>{
+    if(y>270){ doc.addPage(); y=20; }
+    x=14;
+    const wrapped=row.map((c,i)=>doc.splitTextToSize(pdfClean(c), rep.widths[i]-3));
+    const maxLines=Math.max(...wrapped.map(w=>w.length));
+    wrapped.forEach((t,i)=>{ doc.text(t, x+2, y); x+=rep.widths[i]; });
+    const rowH=maxLines*4.2+3;
+    doc.setDrawColor(170,190,210); doc.line(14,y+rowH-2,196,y+rowH-2);
+    y+=rowH;
+  });
+  doc.setFontSize(7); doc.setTextColor(110,120,140);
+  doc.text("Document generat automàticament per Superconta. El número de sèrie identifica de forma única aquest lliurament i alumne.", 14, 290);
+  const blob = doc.output('blob');
+  const filename = `Superconta_${G.curs}_${G.ini}_Fase${phase}_${serialFor().slice(-8)}.pdf`;
+  const fallback = ()=>{ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); };
+  try{
+    const downloads = await claude.use("downloads");
+    if(downloads){ await downloads.save({filename, data: blob}); } else fallback();
+  }catch(e){ fallback(); }
+}
+reg('btn-start','btn-check','btn-continue','btn-pdf','btn-restart');
+if(window.__scClick) document.removeEventListener('click', window.__scClick);
+window.__scClick = function(e){
+  const b = e.target && e.target.closest ? e.target.closest('button') : null;
+  if(b && b.id && HANDLERS[b.id] && !b.disabled) HANDLERS[b.id].call(b, e);
+};
+document.addEventListener('click', window.__scClick);
+$('boot').textContent = 'Llest · v6';
+})();
+</script>
+
+</body></html>
